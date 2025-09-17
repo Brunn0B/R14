@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Autorizações R14</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        /* Reset e Variáveis */
+        :root {
+            --primary: #2c3e50;
+            --primary-light: #34495e;
+            --secondary: #e74c3c;
+            --accent: #f39c12;
+            --dark: #121212;
+            --dark-light: #1E1E1E;
+            --light: #FFFFFF;
+            --gray: #F0F0F0;
+            --gray-dark: #808080;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
+            
+            --sidebar-width: 280px;
+            --topbar-height: 80px;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+            
+            --transition: all 0.3s ease;
+            --transition-slow: all 0.5s ease;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #FAFAFA;
+            color: #333;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        h1, h2, h3, h4, h5 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        /* Layout Principal */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+        /* Sidebar Moderno */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            transition: var(--transition-slow);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+            transform: translateX(-100%);
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .sidebar-header {
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-logo {
+            height: 90px;
+            border-radius: 8px;
+        }
+        .sidebar-logo-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+        }
+        .sidebar-menu {
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .menu-category {
+            padding: 10px 25px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            margin: 5px 15px;
+            border-radius: var(--border-radius-sm);
+        }
+        .menu-item:hover, .menu-item.active {
+            background: var(--accent);
+            color: white;
+        }
+        .menu-item i {
+            width: 24px;
+            margin-right: 12px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .menu-item span {
+            font-size: 0.95rem;
+        }
+        .menu-badge {
+            margin-left: auto;
+            background: var(--secondary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .user-role {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+        }
+        .logout-btn {
+            color: rgba(255,255,255,0.6);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            color: white;
+        }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            transition: var(--transition-slow);
+        }
+        .main-content.expanded {
+            margin-left: var(--sidebar-width);
+        }
+        /* Topbar Moderno */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 25px;
+            background: white;
+            box-shadow: var(--shadow-sm);
+            height: var(--topbar-height);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .menu-toggle {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .menu-toggle:hover {
+            background: rgba(44, 62, 80, 0.1);
+        }
+        .search-bar {
+            position: relative;
+            width: 300px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+        .search-bar input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.2);
+        }
+        .search-bar i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-dark);
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .notification-btn, .messages-btn {
+            position: relative;
+            color: var(--gray-dark);
+            transition: var(--transition);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light);
+        }
+        .notification-btn:hover, .messages-btn:hover {
+            color: var(--primary);
+            background: rgba(44, 62, 80, 0.1);
+        }
+        .notification-badge, .messages-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: var(--transition);
+            background: var(--light);
+        }
+        .user-profile:hover {
+            background: rgba(44, 62, 80, 0.1);
+        }
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .profile-role {
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+        }
+        /* Content Wrapper */
+        .content-wrapper {
+            padding: 25px;
+        }
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
+        .page-title h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+        .page-title h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        .page-title p {
+            color: var(--gray-dark);
+            font-size: 0.95rem;
+        }
+        .page-actions {
+            display: flex;
+            gap: 15px;
+        }
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+        .btn i {
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .btn-outline:hover {
+            background: rgba(44, 62, 80, 0.1);
+        }
+        .btn-secondary {
+            background: var(--dark);
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #000;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--primary);
+            background: rgba(44, 62, 80, 0.1);
+            margin-bottom: 20px;
+        }
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--gray-dark);
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 5px;
+        }
+        .stat-change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stat-change.up {
+            color: var(--success);
+        }
+        .stat-change.down {
+            color: var(--danger);
+        }
+        /* Main Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+        /* Consultations Table */
+        .consultations-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            position: relative;
+        }
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .view-all {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .view-all:hover {
+            text-decoration: underline;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--border-radius-sm);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        th {
+            text-align: left;
+            padding: 15px;
+            font-size: 0.8rem;
+            color: var(--gray-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--gray);
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray);
+            font-size: 0.95rem;
+        }
+        tr:hover td {
+            background: rgba(44, 62, 80, 0.03);
+        }
+        .vehicle-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .vehicle-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .vehicle-plate {
+            font-weight: 600;
+        }
+        .vehicle-id {
+            font-size: 0.8rem;
+            color: var(--gray-dark);
+        }
+        .authorization-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-aguardando {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        .status-feito {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        .status-falta-doc {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        .status-em-analise {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--info);
+        }
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--gray-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 8px;
+            border-radius: 50%;
+        }
+        .action-btn:hover {
+            color: var(--primary);
+            background: rgba(44, 62, 80, 0.1);
+        }
+        /* Right Column */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        /* Calendar */
+        .calendar-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            position: relative;
+        }
+        .calendar-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .calendar-nav-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--light);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .calendar-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .calendar-month {
+            font-weight: 600;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+        .calendar-day-header {
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+            font-weight: 600;
+            padding: 8px 0;
+        }
+        .calendar-day {
+            padding: 8px;
+            font-size: 0.9rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .calendar-day:hover {
+            background: rgba(44, 62, 80, 0.1);
+        }
+        .calendar-day.today {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        .calendar-day.has-event::after {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 3px auto 0;
+        }
+        .calendar-day.other-month {
+            color: var(--gray);
+        }
+        /* Upcoming Events */
+        .upcoming-events {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .events-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            position: relative;
+        }
+        .events-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        .event-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--gray);
+        }
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        .event-time {
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+            font-weight: 600;
+        }
+        .event-details {
+            flex: 1;
+        }
+        .event-details h4 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        .event-details p {
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+        }
+        .event-type {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .type-guincho {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--info);
+        }
+        .type-pereciveis {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        .type-contrato {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        .type-garagem {
+            background: rgba(155, 89, 182, 0.1);
+            color: #9b59b6;
+        }
+        .type-cacamba {
+            background: rgba(149, 165, 166, 0.1);
+            color: #95a5a6;
+        }
+        /* Charts Section */
+        .charts-section {
+            margin-top: 30px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        .section-description {
+            color: var(--gray-dark);
+            font-size: 0.95rem;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        /* Efeitos de Partículas */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        /* Efeito de Interação com Mouse */
+        .interactive-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .interactive-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at var(--x) var(--y), rgba(44, 62, 80, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .interactive-card:hover::before {
+            opacity: 1;
+        }
+        /* Filtros */
+        .filters-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: white;
+            border: 1px solid var(--gray);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-dark);
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-section {
+            margin-bottom: 25px;
+        }
+        .modal-section-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--gray-dark);
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .doc-item {
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius-sm);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .doc-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .doc-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .doc-name {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .doc-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .doc-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .doc-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+        .doc-btn.upload {
+            background: var(--primary);
+            color: white;
+        }
+        .doc-btn.view {
+            background: var(--gray);
+            color: var(--dark);
+        }
+        .file-input {
+            display: none;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        /* Responsivo */
+        @media (min-width: 992px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+            
+            .menu-toggle {
+                display: none;
+            }
+        }
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .right-column {
+                grid-row: 1;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .search-bar {
+                display: none;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .filters-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .topbar {
+                padding: 0 15px;
+            }
+            
+            .content-wrapper {
+                padding: 20px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .docs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Animações */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Efeito de Partículas -->
+    <div id="particles-js"></div>
+    
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="img/logo.png" alt="Logo Autorizações R14" class="sidebar-logo">
+                <div class="sidebar-logo-text">Autorizações R14</div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <div class="menu-category">Principal</div>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Veículos</span>
+                    <span class="menu-badge">24</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Autorizações</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Mensagens</span>
+                    <span class="menu-badge">3</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notificações</span>
+                    <span class="menu-badge">2</span>
+                </a>
+                
+                <div class="menu-category">Tipos</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-trailer"></i>
+                    <span>Guinchos</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-ice-cream"></i>
+                    <span>Perecíveis</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Contratos</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Garagens</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-dumpster"></i>
+                    <span>Caçambas</span>
+                </a>
+                
+                <div class="menu-category">Administrativo</div>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Relatórios</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>Financeiro</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Usuários</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-avatar">OP</div>
+                <div class="user-info">
+                    <div class="user-name">Operador Logístico</div>
+                    <div class="user-role">Administrador</div>
+                </div>
+                <div class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <div class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Pesquisar placas, autorizações...">
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="messages-btn">
+                        <i class="fas fa-envelope"></i>
+                        <span class="messages-badge">3</span>
+                    </div>
+                    
+                    <div class="user-profile">
+                        <div class="profile-info">
+                            <div class="profile-name">Operador Logístico</div>
+                            <div class="profile-role">Administrador</div>
+                        </div>
+                        <div class="profile-avatar">OP</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Wrapper -->
+            <div class="content-wrapper">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Dashboard de Autorizações R14</h1>
+                        <p>Monitoramento e gestão de autorizações de trânsito para veículos especiais.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nova Autorização
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtros -->
+                <div class="filters-container">
+                    <button class="filter-btn active">Todos</button>
+                    <button class="filter-btn">Guincho</button>
+                    <button class="filter-btn">Perecíveis</button>
+                    <button class="filter-btn">Contrato</button>
+                    <button class="filter-btn">Garagem</button>
+                    <button class="filter-btn">Caçamba</button>
+                    <button class="filter-btn">Aguardando</button>
+                    <button class="filter-btn">Falta Doc</button>
+                    <button class="filter-btn">Feito</button>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card interactive-card reveal">
+                        <div class="stat-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <div class="stat-title">Total de Autorizações</div>
+                        <div class="stat-value">42</div>
+                        <div class="stat-change up">
+                            <i class="fas fa-arrow-up"></i> 15% este mês
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card interactive-card reveal" style="transition-delay: 0.1s;">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-title">Autorizações Concluídas</div>
+                        <div class="stat-value">28</div>
+                        <div class="stat-change up">
+                            <i class="fas fa-arrow-up"></i> 67% de eficiência
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card interactive-card reveal" style="transition-delay: 0.2s;">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-title">Pendentes de Documentos</div>
+                        <div class="stat-value">9</div>
+                        <div class="stat-change down">
+                            <i class="fas fa-arrow-down"></i> 3 resolvidas hoje
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card interactive-card reveal" style="transition-delay: 0.3s;">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-title">Aguardando Aprovação</div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-change up">
+                            <i class="fas fa-arrow-up"></i> 2 novas hoje
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Grid -->
+                <div class="content-grid">
+                    <!-- Left Column -->
+                    <div class="left-column">
+                        <!-- Authorizations Table -->
+                        <div class="consultations-card interactive-card reveal">
+                            <div class="card-header">
+                                <h3 class="card-title">Autorizações Recentes</h3>
+                                <div class="card-actions">
+                                    <button class="btn btn-secondary">
+                                        <i class="fas fa-download"></i> Exportar
+                                    </button>
+                                    <a href="#" class="view-all">
+                                        Ver Todas <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Placa/Veículo</th>
+                                            <th>Data Solicitação</th>
+                                            <th>Tipo</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="vehicle-info">
+                                                    <div class="vehicle-avatar">ABC</div>
+                                                    <div>
+                                                        <div class="vehicle-plate">ABC1D23</div>
+                                                        <div class="vehicle-id">ID: #R14-4587</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>15 Jun, 09:30</td>
+                                            <td>Guincho</td>
+                                            <td>
+                                                <span class="authorization-status status-feito">
+                                                    <i class="fas fa-check-circle"></i> Feito
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="action-btn" title="Ver detalhes" onclick="openModal('ABC1D23')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="action-btn" title="Arquivar">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="vehicle-info">
+                                                    <div class="vehicle-avatar">XYZ</div>
+                                                    <div>
+                                                        <div class="vehicle-plate">XYZ4E56</div>
+                                                        <div class="vehicle-id">ID: #R14-4586</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>15 Jun, 10:15</td>
+                                            <td>Perecíveis</td>
+                                            <td>
+                                                <span class="authorization-status status-aguardando">
+                                                    <i class="fas fa-clock"></i> Aguardando
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="action-btn" title="Ver detalhes" onclick="openModal('XYZ4E56')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="Aprovar">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button class="action-btn" title="Rejeitar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="vehicle-info">
+                                                    <div class="vehicle-avatar">DEF</div>
+                                                    <div>
+                                                        <div class="vehicle-plate">DEF7G89</div>
+                                                        <div class="vehicle-id">ID: #R14-4585</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>15 Jun, 11:00</td>
+                                            <td>Caçamba</td>
+                                            <td>
+                                                <span class="authorization-status status-falta-doc">
+                                                    <i class="fas fa-exclamation-circle"></i> Falta Doc
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="action-btn" title="Ver detalhes" onclick="openModal('DEF7G89')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="Solicitar docs">
+                                                    <i class="fas fa-envelope"></i>
+                                                </button>
+                                                <button class="action-btn" title="Cancelar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="vehicle-info">
+                                                    <div class="vehicle-avatar">GHI</div>
+                                                    <div>
+                                                        <div class="vehicle-plate">GHI0J12</div>
+                                                        <div class="vehicle-id">ID: #R14-4584</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>14 Jun, 16:30</td>
+                                            <td>Contrato</td>
+                                            <td>
+                                                <span class="authorization-status status-feito">
+                                                    <i class="fas fa-check-circle"></i> Feito
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="action-btn" title="Ver detalhes" onclick="openModal('GHI0J12')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="Renovar">
+                                                    <i class="fas fa-sync"></i>
+                                                </button>
+                                                <button class="action-btn" title="Arquivar">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="vehicle-info">
+                                                    <div class="vehicle-avatar">MNO</div>
+                                                    <div>
+                                                        <div class="vehicle-plate">MNO3P45</div>
+                                                        <div class="vehicle-id">ID: #R14-4583</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>14 Jun, 14:45</td>
+                                            <td>Garagem</td>
+                                            <td>
+                                                <span class="authorization-status status-em-analise">
+                                                    <i class="fas fa-search"></i> Em Análise
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="action-btn" title="Ver detalhes" onclick="openModal('MNO3P45')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="Avançar">
+                                                    <i class="fas fa-forward"></i>
+                                                </button>
+                                                <button class="action-btn" title="Cancelar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts Section -->
+                        <div class="charts-section">
+                            <div class="section-header reveal">
+                                <div>
+                                    <h3 class="section-title">Análise de Autorizações</h3>
+                                    <p class="section-description">Métricas e distribuição por tipo e status</p>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-outline">
+                                        <i class="fas fa-calendar-alt"></i> Filtros
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="charts-grid">
+                                <div class="chart-card interactive-card reveal">
+                                    <div class="chart-header">
+                                        <h4 class="chart-title">Autorizações por Dia</h4>
+                                        <button class="action-btn" title="Configurar">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="authorizationsChart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-card interactive-card reveal" style="transition-delay: 0.1s;">
+                                    <div class="chart-header">
+                                        <h4 class="chart-title">Distribuição por Tipo</h4>
+                                        <button class="action-btn" title="Configurar">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="typesChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="right-column">
+                        <!-- Calendar -->
+                        <div class="calendar-card interactive-card reveal">
+                            <div class="calendar-header">
+                                <h3 class="calendar-title">Junho 2025</h3>
+                                <div class="calendar-nav">
+                                    <button class="calendar-nav-btn">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span class="calendar-month">Junho</span>
+                                    <button class="calendar-nav-btn">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="calendar-grid">
+                                <div class="calendar-day-header">Dom</div>
+                                <div class="calendar-day-header">Seg</div>
+                                <div class="calendar-day-header">Ter</div>
+                                <div class="calendar-day-header">Qua</div>
+                                <div class="calendar-day-header">Qui</div>
+                                <div class="calendar-day-header">Sex</div>
+                                <div class="calendar-day-header">Sáb</div>
+                                
+                                <div class="calendar-day other-month">26</div>
+                                <div class="calendar-day other-month">27</div>
+                                <div class="calendar-day other-month">28</div>
+                                <div class="calendar-day other-month">29</div>
+                                <div class="calendar-day other-month">30</div>
+                                <div class="calendar-day other-month">31</div>
+                                <div class="calendar-day">1</div>
+                                
+                                <div class="calendar-day">2</div>
+                                <div class="calendar-day">3</div>
+                                <div class="calendar-day">4</div>
+                                <div class="calendar-day">5</div>
+                                <div class="calendar-day">6</div>
+                                <div class="calendar-day">7</div>
+                                <div class="calendar-day">8</div>
+                                
+                                <div class="calendar-day">9</div>
+                                <div class="calendar-day">10</div>
+                                <div class="calendar-day">11</div>
+                                <div class="calendar-day">12</div>
+                                <div class="calendar-day">13</div>
+                                <div class="calendar-day">14</div>
+                                <div class="calendar-day">15</div>
+                                
+                                <div class="calendar-day today">16</div>
+                                <div class="calendar-day has-event">17</div>
+                                <div class="calendar-day has-event">18</div>
+                                <div class="calendar-day">19</div>
+                                <div class="calendar-day">20</div>
+                                <div class="calendar-day">21</div>
+                                <div class="calendar-day">22</div>
+                                
+                                <div class="calendar-day">23</div>
+                                <div class="calendar-day">24</div>
+                                <div class="calendar-day has-event">25</div>
+                                <div class="calendar-day">26</div>
+                                <div class="calendar-day">27</div>
+                                <div class="calendar-day">28</div>
+                                <div class="calendar-day">29</div>
+                                
+                                <div class="calendar-day">30</div>
+                                <div class="calendar-day other-month">1</div>
+                                <div class="calendar-day other-month">2</div>
+                                <div class="calendar-day other-month">3</div>
+                                <div class="calendar-day other-month">4</div>
+                                <div class="calendar-day other-month">5</div>
+                                <div class="calendar-day other-month">6</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upcoming Events -->
+                        <div class="upcoming-events interactive-card reveal" style="transition-delay: 0.1s;">
+                            <div class="events-header">
+                                <h3 class="events-title">Próximas Expirações</h3>
+                                <a href="#" class="view-all">
+                                    Ver Todas <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
+                            
+                            <div class="events-list">
+                                <div class="event-item">
+                                    <div class="event-time">19 Jun</div>
+                                    <div class="event-details">
+                                        <h4>ABC1D23</h4>
+                                        <p>Autorização Guincho - Expira em 3 dias</p>
+                                        <span class="event-type type-guincho">
+                                            <i class="fas fa-trailer"></i> Guincho
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="event-item">
+                                    <div class="event-time">21 Jun</div>
+                                    <div class="event-details">
+                                        <h4>XYZ4E56</h4>
+                                        <p>Autorização Perecíveis - Expira em 5 dias</p>
+                                        <span class="event-type type-pereciveis">
+                                            <i class="fas fa-ice-cream"></i> Perecíveis
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="event-item">
+                                    <div class="event-time">25 Jun</div>
+                                    <div class="event-details">
+                                        <h4>DEF7G89</h4>
+                                        <p>Autorização Caçamba - Expira em 9 dias</p>
+                                        <span class="event-type type-cacamba">
+                                            <i class="fas fa-dumpster"></i> Caçamba
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="event-item">
+                                    <div class="event-time">28 Jun</div>
+                                    <div class="event-details">
+                                        <h4>GHI0J12</h4>
+                                        <p>Autorização Contrato - Expira em 12 dias</p>
+                                        <span class="event-type type-contrato">
+                                            <i class="fas fa-file-signature"></i> Contrato
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalhes da Autorização - <span id="modalPlate"></span></h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Informações do Veículo</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Placa</span>
+                            <span class="info-value" id="infoPlate">ABC1D23</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Proprietário</span>
+                            <span class="info-value" id="infoOwner">Transportes ABC Ltda</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tipo de Veículo</span>
+                            <span class="info-value" id="infoType">Caminhão Guincho</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Marca/Modelo</span>
+                            <span class="info-value" id="infoModel">Volkswagen/Meteor</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ano</span>
+                            <span class="info-value" id="infoYear">2022</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Cor</span>
+                            <span class="info-value" id="infoColor">Branco</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Status da Autorização</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Número da Autorização</span>
+                            <span class="info-value" id="infoAuthNumber">R14-2023-04587</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data de Emissão</span>
+                            <span class="info-value" id="infoIssueDate">15/06/2023</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data de Validade</span>
+                            <span class="info-value" id="infoExpiryDate">15/12/2023</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value">
+                                <span class="status-badge status-feito">Aprovado</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Documentação</h4>
+                    <div class="docs-grid">
+                        <div class="doc-item">
+                            <div class="doc-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="doc-name">CRLV</div>
+                            <div class="doc-status status-feito">Enviado</div>
+                            <div class="doc-actions">
+                                <button class="doc-btn view">Visualizar</button>
+                                <button class="doc-btn upload" onclick="document.getElementById('crlvInput').click()">Substituir</button>
+                                <input type="file" id="crlvInput" class="file-input" accept=".pdf">
+                            </div>
+                        </div>
+                        
+                        <div class="doc-item">
+                            <div class="doc-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <div class="doc-name">Contrato Social</div>
+                            <div class="doc-status status-feito">Enviado</div>
+                            <div class="doc-actions">
+                                <button class="doc-btn view">Visualizar</button>
+                                <button class="doc-btn upload" onclick="document.getElementById('contratoInput').click()">Substituir</button>
+                                <input type="file" id="contratoInput" class="file-input" accept=".pdf">
+                            </div>
+                        </div>
+                        
+                        <div class="doc-item">
+                            <div class="doc-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="doc-name">Fotos do Veículo</div>
+                            <div class="doc-status status-feito">Enviado</div>
+                            <div class="doc-actions">
+                                <button class="doc-btn view">Visualizar</button>
+                                <button class="doc-btn upload" onclick="document.getElementById('fotosInput').click()">Substituir</button>
+                                <input type="file" id="fotosInput" class="file-input" accept="image/*" multiple>
+                            </div>
+                        </div>
+                        
+                        <div class="doc-item">
+                            <div class="doc-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="doc-name">Documento do Proprietário</div>
+                            <div class="doc-status status-falta-doc">Pendente</div>
+                            <div class="doc-actions">
+                                <button class="doc-btn upload" onclick="document.getElementById('docPropInput').click()">Enviar</button>
+                                <input type="file" id="docPropInput" class="file-input" accept=".pdf,image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Histórico de Alterações</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">15/06/2023 14:30</span>
+                            <span class="info-value">Autorização aprovada por Carlos Silva</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">15/06/2023 11:45</span>
+                            <span class="info-value">Documentação revisada por Ana Oliveira</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">14/06/2023 16:20</span>
+                            <span class="info-value">Solicitação recebida</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <script>
+        // Inicializar partículas
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#2c3e50"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    }
+                },
+                "opacity": {
+                    "value": 0.3,
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#2c3e50",
+                    "opacity": 0.2,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+        // Menu toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        });
+        // Interactive card effect
+        document.querySelectorAll('.interactive-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--x', `${x}px`);
+                card.style.setProperty('--y', `${y}px`);
+            });
+        });
+        // Calendar day selection
+        document.querySelectorAll('.calendar-day:not(.other-month)').forEach(day => {
+            day.addEventListener('click', function() {
+                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        // Today's date highlight
+        const today = new Date();
+        document.querySelector('.today').textContent = today.getDate();
+        // Scroll reveal animation
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            reveals.forEach(reveal => {
+                const windowHeight = window.innerHeight;
+                const revealTop = reveal.getBoundingClientRect().top;
+                const revealPoint = 150;
+                
+                if (revealTop < windowHeight - revealPoint) {
+                    reveal.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll(); // Run once on page load
+        
+        // Modal functions
+        function openModal(plate) {
+            document.getElementById('modalPlate').textContent = plate;
+            document.getElementById('detailsModal').style.display = 'flex';
+            
+            // Set example data based on plate
+            document.getElementById('infoPlate').textContent = plate;
+            document.getElementById('infoOwner').textContent = getOwnerByPlate(plate);
+            document.getElementById('infoType').textContent = getTypeByPlate(plate);
+            document.getElementById('infoModel').textContent = getModelByPlate(plate);
+            document.getElementById('infoYear').textContent = getYearByPlate(plate);
+            document.getElementById('infoColor').textContent = getColorByPlate(plate);
+        }
+        
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+        
+        // Example data functions
+        function getOwnerByPlate(plate) {
+            const owners = {
+                'ABC1D23': 'Transportes ABC Ltda',
+                'XYZ4E56': 'Distribuidora XYZ ME',
+                'DEF7G89': 'Construtora DEF S/A',
+                'GHI0J12': 'Logística GHI EIRELI',
+                'MNO3P45': 'Serviços MNO Ltda'
+            };
+            return owners[plate] || 'Proprietário não identificado';
+        }
+        
+        function getTypeByPlate(plate) {
+            const types = {
+                'ABC1D23': 'Caminhão Guincho',
+                'XYZ4E56': 'Caminhão Refrigerado',
+                'DEF7G89': 'Caminhão Caçamba',
+                'GHI0J12': 'Van de Carga',
+                'MNO3P45': 'Caminhão Baú'
+            };
+            return types[plate] || 'Tipo não identificado';
+        }
+        
+        function getModelByPlate(plate) {
+            const models = {
+                'ABC1D23': 'Volkswagen/Meteor',
+                'XYZ4E56': 'Mercedes-Benz/Accelo',
+                'DEF7G89': 'Volvo/VM 270',
+                'GHI0J12': 'Fiat/Ducato',
+                'MNO3P45': 'Scania/P310'
+            };
+            return models[plate] || 'Modelo não identificado';
+        }
+        
+        function getYearByPlate(plate) {
+            const years = {
+                'ABC1D23': '2022',
+                'XYZ4E56': '2021',
+                'DEF7G89': '2020',
+                'GHI0J12': '2023',
+                'MNO3P45': '2019'
+            };
+            return years[plate] || 'Ano não identificado';
+        }
+        
+        function getColorByPlate(plate) {
+            const colors = {
+                'ABC1D23': 'Branco',
+                'XYZ4E56': 'Azul',
+                'DEF7G89': 'Vermelho',
+                'GHI0J12': 'Prata',
+                'MNO3P45': 'Preto'
+            };
+            return colors[plate] || 'Cor não identificada';
+        }
+        
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Authorizations by Day Chart
+            const authCtx = document.getElementById('authorizationsChart').getContext('2d');
+            const authChart = new Chart(authCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1 Jun', '2 Jun', '3 Jun', '4 Jun', '5 Jun', '6 Jun', '7 Jun', '8 Jun', '9 Jun', '10 Jun', '11 Jun', '12 Jun', '13 Jun', '14 Jun', '15 Jun'],
+                    datasets: [{
+                        label: 'Autorizações Solicitadas',
+                        data: [3, 5, 2, 4, 6, 3, 1, 4, 5, 3, 4, 6, 5, 4, 5],
+                        backgroundColor: 'rgba(44, 62, 80, 0.7)',
+                        borderColor: '#2c3e50',
+                        borderWidth: 1
+                    }, {
+                        label: 'Autorizações Aprovadas',
+                        data: [2, 4, 1, 3, 5, 2, 1, 3, 4, 2, 3, 5, 4, 3, 4],
+                        backgroundColor: 'rgba(39, 174, 96, 0.7)',
+                        borderColor: '#27ae60',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Types Distribution Chart
+            const typesCtx = document.getElementById('typesChart').getContext('2d');
+            const typesChart = new Chart(typesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Guincho', 'Perecíveis', 'Contrato', 'Garagem', 'Caçamba'],
+                    datasets: [{
+                        data: [35, 25, 15, 10, 15],
+                        backgroundColor: [
+                            '#3498db',
+                            '#27ae60',
+                            '#f39c12',
+                            '#9b59b6',
+                            '#95a5a6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Update charts on window resize
+            window.addEventListener('resize', function() {
+                authChart.resize();
+                typesChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>
